@@ -22,7 +22,7 @@ public class Main {
                 .addEventListeners( new BadWordFilter())
                 .build();
 
-        String tokenNoxusBot = EnvUtils.getEnv(BotConstant.BOT_INTRODUCTION_KEY);
+        String tokenNoxusBot = EnvUtils.getEnv(BotConstant.BOT_NOXUS);
         System.out.println(tokenNoxusBot);
 
         JDABuilder.createDefault(tokenNoxusBot)
