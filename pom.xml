@@ -39,8 +39,8 @@
     </build>
     <repositories>
         <repository>
-            <id>lavaplayer-fork</id>
-            <url>https://maven.lavalink.dev/releases</url>
+            <id>jitpack</id>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
     <dependencies>
