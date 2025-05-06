@@ -15,7 +15,6 @@
     </properties>
     <build>
         <plugins>
-            <!-- Plugin để tạo jar có chứa tất cả dependencies -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -38,7 +37,12 @@
             </plugin>
         </plugins>
     </build>
-
+    <repositories>
+        <repository>
+            <id>lavaplayer-fork</id>
+            <url>https://maven.lavalink.dev/releases</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.json</groupId>
@@ -49,6 +53,11 @@
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
             <version>5.0.0-beta.20</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.arbjerg</groupId>
+            <artifactId>lavaplayer</artifactId>
+            <version>2.2.2</version>
         </dependency>
     </dependencies>
 </project>

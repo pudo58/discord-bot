@@ -1,14 +1,29 @@
 package io.github.pudo58.bot.noxus;
 
+import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
+import com.sedmelluq.discord.lavaplayer.source.http.HttpAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.soundcloud.SoundCloudAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import io.github.pudo58.utils.RankUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.unions.AudioChannelUnion;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import static io.github.pudo58.constant.RankConstant.BRONZE;
@@ -49,7 +64,10 @@ public class CommandListener extends ListenerAdapter {
         String msg = event.getMessage().getContentRaw();
 
         if (event.getAuthor().isBot()) return;
-
+        if (msg.startsWith("!play")) {
+            String url = msg.substring(6);
+            playMusic(event, url);
+        }
         switch (msg) {
             case "!rank":
                 RankUtils.currentRank(event);
@@ -70,4 +88,62 @@ public class CommandListener extends ListenerAdapter {
             }
         }
     }
+
+    private final AudioPlayerManager playerManager = new DefaultAudioPlayerManager();
+    private final Map<Long, GuildAudio> musicManagers = new HashMap<>();
+
+    public CommandListener() {
+        playerManager.registerSourceManager(new YoutubeAudioSourceManager());
+        playerManager.registerSourceManager(SoundCloudAudioSourceManager.createDefault());
+        playerManager.registerSourceManager(new HttpAudioSourceManager());
+        playerManager.getConfiguration().setFilterHotSwapEnabled(true);
+        AudioSourceManagers.registerRemoteSources(playerManager);
+    }
+
+    private synchronized GuildAudio getGuildAudio(Guild guild) {
+        return musicManagers.computeIfAbsent(guild.getIdLong(), (guildId) -> {
+            GuildAudio manager = new GuildAudio(playerManager);
+            guild.getAudioManager().setSendingHandler(manager.getSendHandler());
+            return manager;
+        });
+    }
+
+    public void playMusic(MessageReceivedEvent event, String url) {
+        Guild guild = event.getGuild();
+        AudioChannelUnion channel = event.getMember().getVoiceState().getChannel();
+        if (channel instanceof VoiceChannel) {
+            VoiceChannel voiceChannel = (VoiceChannel) channel;
+            GuildAudio guildAudio = getGuildAudio(guild);
+
+            guild.getAudioManager().openAudioConnection(voiceChannel);
+
+            playerManager.loadItem(url, new AudioLoadResultHandler() {
+                @Override
+                public void trackLoaded(AudioTrack track) {
+                    guildAudio.scheduler.queue(track);
+                    event.getChannel().sendMessage("Đã thêm vào hàng đợi: " + track.getInfo().title).queue();
+                }
+
+                @Override
+                public void playlistLoaded(AudioPlaylist playlist) {
+                    AudioTrack firstTrack = playlist.getSelectedTrack() != null
+                            ? playlist.getSelectedTrack()
+                            : playlist.getTracks().get(0);
+                    guildAudio.scheduler.queue(firstTrack);
+                    event.getChannel().sendMessage("Đã thêm bài đầu tiên từ playlist: " + firstTrack.getInfo().title).queue();
+                }
+
+                @Override
+                public void noMatches() {
+                    event.getChannel().sendMessage("Không tìm thấy bài nào.").queue();
+                }
+
+                @Override
+                public void loadFailed(FriendlyException exception) {
+                    event.getChannel().sendMessage("Lỗi khi tải bài hát: " + exception.getMessage()).queue();
+                }
+            });
+        }
+    }
+
 }
