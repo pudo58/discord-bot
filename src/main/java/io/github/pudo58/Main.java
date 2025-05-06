@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 public class Main {
     public static void main(String[] args) {
         String token = EnvUtils.getEnv(BotConstant.BOT_INTRODUCTION_KEY);
+        System.out.println(token);
 
         JDABuilder.createDefault(token)
                 .enableIntents(
