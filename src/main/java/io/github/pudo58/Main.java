@@ -1,5 +1,6 @@
 package io.github.pudo58;
 
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeAudioSourceManager;
 import io.github.pudo58.bot.introduction.BadWordFilter;
 import io.github.pudo58.bot.introduction.CommandListener;
 import io.github.pudo58.bot.noxus.GuessGameListener;
@@ -25,6 +26,7 @@ public class Main {
 
         String tokenNoxusBot = EnvUtils.getEnv(BotConstant.BOT_NOXUS);
         System.out.println(tokenNoxusBot);
+        System.out.println(YoutubeAudioSourceManager.class.getProtectionDomain().getCodeSource().getLocation());
 
         JDABuilder.createDefault(tokenNoxusBot)
                 .enableIntents(

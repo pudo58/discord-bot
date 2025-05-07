@@ -103,7 +103,7 @@ public class CommandListener extends ListenerAdapter {
     private synchronized GuildAudio getGuildAudio(Guild guild) {
         return musicManagers.computeIfAbsent(guild.getIdLong(), (guildId) -> {
             GuildAudio manager = new GuildAudio(playerManager);
-            guild.getAudioManager().setSendingHandler(manager.getSendHandler());
+            guild.getAudioManager().setSendingHandler(new AudioPlayerSendHandler(manager.player));
             return manager;
         });
     }
@@ -111,6 +111,10 @@ public class CommandListener extends ListenerAdapter {
     public void playMusic(MessageReceivedEvent event, String url) {
         Guild guild = event.getGuild();
         AudioChannelUnion channel = event.getMember().getVoiceState().getChannel();
+        if (channel == null) {
+            event.getChannel().sendMessage("Vui lòng vào voice channel trước khi dùng lệnh !play").queue();
+            return;
+        }
         if (channel instanceof VoiceChannel) {
             VoiceChannel voiceChannel = (VoiceChannel) channel;
             GuildAudio guildAudio = getGuildAudio(guild);
@@ -140,6 +144,7 @@ public class CommandListener extends ListenerAdapter {
 
                 @Override
                 public void loadFailed(FriendlyException exception) {
+                    exception.printStackTrace();
                     event.getChannel().sendMessage("Lỗi khi tải bài hát: " + exception.getMessage()).queue();
                 }
             });

@@ -2,6 +2,7 @@ package io.github.pudo58.bot.noxus;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 
@@ -28,5 +29,13 @@ public class TrackScheduler extends AudioEventAdapter {
         if (endReason.mayStartNext) {
             player.startTrack(queue.poll(), false);
         }
+    }
+
+    public void onTrackStart(AudioPlayer player, AudioTrack track) {
+        System.out.println("Now playing: " + track.getInfo().title);
+    }
+
+    public void onTrackException(AudioPlayer player, AudioTrack track, FriendlyException exception) {
+        exception.printStackTrace();
     }
 }
